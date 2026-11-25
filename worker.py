@@ -38,6 +38,18 @@ def set_boss_killed(boss_id: int, death_timestamp: float):
     sync_cache_from_db()
 
 
+def reset_boss_timer(boss_id: int):
+    db = SessionLocal()
+    try:
+        db.query(Boss).filter(Boss.id == boss_id).update(
+            {"death_time": None, "status": "idle"}
+        )
+        db.commit()
+    finally:
+        db.close()
+    sync_cache_from_db()
+
+
 def check_timers_in_memory():
     now = time.time()
     for boss_id, boss in list(BOSSES_CACHE.items()):
@@ -62,7 +74,7 @@ def check_timers_in_memory():
                 db.close()
             if result == 1:
                 if new_status == "spawned":
-                    send_tg_message(f"🔴 <b>СТОИТ: {boss['name']}!</b>")
+                    send_tg_message(f"🔴 <b>Максимальное время респа прошло: {boss['name']}!</b>")
                 else:
                     send_tg_message(f"🟡 <b>РЕСП ПОШЕЛ: {boss['name']}!</b>")
                 sync_cache_from_db()
@@ -77,7 +89,7 @@ def check_timers_in_memory():
             finally:
                 db.close()
             if result == 1:
-                send_tg_message(f"🔴 <b>СТОИТ: {boss['name']}!</b>")
+                send_tg_message(f"🔴 <b>Максимальное время респа прошло: {boss['name']}!</b>")
                 sync_cache_from_db()
 
 

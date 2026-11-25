@@ -2,7 +2,7 @@ from sqlalchemy import create_engine, Column, Integer, String, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-from config import DATABASE_URL
+from config import DATABASE_URL, SERVER_PASSWORD
 from bosses_data import LU4_BOSSES
 
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
@@ -21,8 +21,26 @@ class Boss(Base):
     status = Column(String, default="idle")
 
 
+class Setting(Base):
+    __tablename__ = "settings"
+
+    key = Column(String, primary_key=True, index=True)
+    value = Column(String, nullable=False)
+
+
 def init_db():
     Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
+    try:
+        setting = db.query(Setting).filter(Setting.key == "server_password").first()
+        if not setting:
+            db.add(Setting(key="server_password", value="lu4password"))
+        setting = db.query(Setting).filter(Setting.key == "admin_password").first()
+        if not setting:
+            db.add(Setting(key="admin_password", value="fortheemperor"))
+        db.commit()
+    finally:
+        db.close()
 
 
 def seed_initial_bosses():
@@ -52,6 +70,32 @@ def seed_initial_bosses():
         tester = db.query(Boss).filter(Boss.name == "TESTER_RB").first()
         if not tester:
             db.add(Boss(name="TESTER_RB", respawn_min=10 / 60, respawn_max=20 / 60))
+        db.commit()
+    finally:
+        db.close()
+
+
+def get_passwords() -> tuple[str, str]:
+    db = SessionLocal()
+    try:
+        user_setting = db.query(Setting).filter(Setting.key == "server_password").first()
+        admin_setting = db.query(Setting).filter(Setting.key == "admin_password").first()
+        return (
+            user_setting.value if user_setting else "lu4password",
+            admin_setting.value if admin_setting else "fortheemperor",
+        )
+    finally:
+        db.close()
+
+
+def set_user_password(new_pass: str):
+    db = SessionLocal()
+    try:
+        setting = db.query(Setting).filter(Setting.key == "server_password").first()
+        if setting:
+            setting.value = new_pass
+        else:
+            db.add(Setting(key="server_password", value=new_pass))
         db.commit()
     finally:
         db.close()

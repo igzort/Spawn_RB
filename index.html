@@ -7,9 +7,9 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: system-ui, -apple-system, sans-serif; background: #0f172a; color: #e2e8f0; padding: 16px; }
-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
-h1 { font-size: 1.25rem; color: #38bdf8; }
-input#searchInput { padding: 8px 12px; border-radius: 6px; border: 1px solid #334155; background: #1e293b; color: #f1f5f9; flex: 1; min-width: 200px; }
+header { display: flex; align-items: center; gap: 20px; margin-bottom: 16px; width: 100%; box-sizing: border-box; }
+h1 { font-size: 1.25rem; color: #38bdf8; white-space: nowrap; }
+input#searchInput { padding: 8px 12px; border-radius: 6px; border: 1px solid #334155; background: #1e293b; color: #f1f5f9; width: 520px; max-width: 100%; }
 button { padding: 8px 14px; border-radius: 6px; border: 1px solid #334155; background: #1e293b; color: #f1f5f9; cursor: pointer; font-size: 0.9rem; }
 button:hover { background: #334155; }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -36,13 +36,51 @@ tr:hover { background: #253045; }
 .time-sep { color: #94a3b8; margin: 0 2px; user-select: none; }
 .btn-ok { background: #16a34a; border-color: #16a34a; color: #fff; }
 .btn-ok:hover:not(:disabled) { background: #22c55e; }
+.btn-reset { background: #64748b; border-color: #64748b; color: #fff; font-size: 0.85rem; padding: 6px 10px; }
+.btn-reset:hover:not(:disabled) { background: #94a3b8; }
+#authOverlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.96); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+.auth-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; width: 320px; color: #e2e8f0; }
+.auth-card h3 { margin-top: 0; color: #38bdf8; }
+.auth-card input { width: 100%; margin-bottom: 10px; box-sizing: border-box; padding: 8px 12px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: #f1f5f9; }
+.auth-card button { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #0ea5e9; background: #0ea5e9; color: #fff; font-weight: 600; cursor: pointer; }
+.auth-card button:hover { background: #38bdf8; }
+#authError { color: #ef4444; font-size: 13px; margin-top: 8px; display: none; }
 </style>
 </head>
 <body>
+<div id="authOverlay">
+  <div class="auth-card">
+    <h3 style="margin-top:0">🔒 Доступ к серверу LU4</h3>
+    <input type="password" id="authPassInput" placeholder="Введите пароль..." style="width:100%; margin-bottom:10px; box-sizing:border-box;">
+    <button id="authSubmitBtn" style="width:100%">Войти</button>
+    <div id="authError" style="color:#ef4444; font-size:13px; margin-top:8px; display:none;">Неверный пароль</div>
+  </div>
+</div>
 <header>
 <h1>Таймер спавна РБ (LU4)</h1>
-<input type="text" id="searchInput" placeholder="🔍 Поиск босса по названию...">
-<button class="sync" id="btnSync">🔄 Синхронизировать с облаком</button>
+<div style="display: flex; flex-direction: column; gap: 6px;">
+  <input type="text" id="searchInput" placeholder="🔍 Поиск босса по названию...">
+  <div style="display: flex; align-items: center; gap: 4px;">
+    <input type="text" id="lvlMinInput" placeholder="От" maxlength="2" style="width: 34px; text-align: center; background: #1e293b; color: #f1f5f9; border: 1px solid #334155; border-radius: 4px; padding: 4px 2px; font-size: 0.85rem;">
+    <span style="color: #94a3b8;">-</span>
+    <input type="text" id="lvlMaxInput" placeholder="До" maxlength="2" style="width: 34px; text-align: center; background: #1e293b; color: #f1f5f9; border: 1px solid #334155; border-radius: 4px; padding: 4px 2px; font-size: 0.85rem;">
+    <button id="sortOrderBtn" title="Сортировка уровней: по убыванию" style="padding: 6px; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <line x1="3" y1="4" x2="11" y2="4" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="3" y1="7" x2="9" y2="7" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="3" y1="10" x2="7" y2="10" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="3" y1="13" x2="5" y2="13" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="14" y1="4" x2="14" y2="11" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="12.5" y1="12.5" x2="14" y2="14" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="15.5" y1="12.5" x2="14" y2="14" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    </button>
+  </div>
+</div>
+<div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
+  <button id="changePassBtn" style="display:none;">🔑 Пароль</button>
+  <button id="syncBtn" class="sync">🔄 Синхронизировать с облаком</button>
+</div>
 </header>
 <table>
 <thead>
@@ -60,19 +98,117 @@ tr:hover { background: #253045; }
 const tableBody = document.getElementById("bossTableBody");
 const searchInput = document.getElementById("searchInput");
 let bosses = [];
+let sortAsc = false;
+const lvlMinInput = document.getElementById("lvlMinInput");
+const lvlMaxInput = document.getElementById("lvlMaxInput");
+const sortOrderBtn = document.getElementById("sortOrderBtn");
+const authOverlay = document.getElementById("authOverlay");
+const authPassInput = document.getElementById("authPassInput");
+const authSubmitBtn = document.getElementById("authSubmitBtn");
+const authError = document.getElementById("authError");
+const changePassBtn = document.getElementById("changePassBtn");
+
+async function apiFetch(input, init = {}) {
+  const headers = {
+    ...(init.headers || {}),
+    "X-Server-Password": sessionStorage.getItem("server_password") || ""
+  };
+  const res = await fetch(input, { ...init, headers });
+  if (res.status === 401) {
+    sessionStorage.removeItem("server_password");
+    authOverlay.style.display = "flex";
+    throw new Error("Unauthorized");
+  }
+  return res;
+}
+
+function showAuth() {
+  authOverlay.style.display = "flex";
+}
+
+function hideAuth() {
+  authOverlay.style.display = "none";
+}
+
+function updateAdminUI(isAdmin) {
+  changePassBtn.style.display = isAdmin ? "inline-block" : "none";
+}
+
+async function checkAuth() {
+  const token = sessionStorage.getItem("server_password");
+  if (!token) {
+    showAuth();
+    return;
+  }
+  try {
+    const res = await apiFetch("/api/me");
+    const data = await res.json();
+    updateAdminUI(data.role === "admin");
+    hideAuth();
+    authPassInput.value = "";
+    authError.style.display = "none";
+    await fetchBosses();
+  } catch (e) {
+    showAuth();
+  }
+}
+
+authSubmitBtn.addEventListener("click", async () => {
+  const pass = authPassInput.value.trim();
+  if (!pass) return;
+  sessionStorage.setItem("server_password", pass);
+  try {
+    const res = await apiFetch("/api/me");
+    const data = await res.json();
+    updateAdminUI(data.role === "admin");
+    hideAuth();
+    authPassInput.value = "";
+    authError.style.display = "none";
+    await fetchBosses();
+  } catch (e) {
+    authError.style.display = "block";
+  }
+});
+
+authPassInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") authSubmitBtn.click();
+});
+
+changePassBtn.addEventListener("click", async () => {
+  const newPass = prompt("Введите новый пароль для пати:");
+  if (newPass === null || newPass.trim() === "") return;
+  try {
+    const res = await apiFetch("/api/change-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newPass)
+    });
+    if (res.ok) {
+      alert("Пароль пати изменён");
+    }
+  } catch (e) {
+    if (e.message !== "Unauthorized") {
+      alert("Ошибка смены пароля: " + e);
+    }
+  }
+});
 
 async function fetchBosses() {
-  const res = await fetch("/api/bosses");
-  bosses = await res.json();
-  render();
+  try {
+    const res = await apiFetch("/api/bosses");
+    bosses = await res.json();
+    render();
+  } catch (e) {
+    // 401 обрабатывается в apiFetch (показывается overlay)
+  }
 }
 
 async function syncBosses() {
-  const btn = document.getElementById("btnSync");
+  const btn = document.getElementById("syncBtn");
   btn.disabled = true;
   btn.textContent = "⏳ Синхронизация...";
   try {
-    const res = await fetch("/api/sync", { method: "POST" });
+    const res = await apiFetch("/api/sync", { method: "POST" });
     bosses = await res.json();
     render();
   } finally {
@@ -91,7 +227,7 @@ async function killBoss(bossId, deathTime = null) {
 
   const payload = deathTime ? { death_time: deathTime } : {};
   try {
-    const res = await fetch("/api/bosses/" + bossId + "/kill", {
+    const res = await apiFetch("/api/bosses/" + bossId + "/kill", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
@@ -106,6 +242,19 @@ async function killBoss(bossId, deathTime = null) {
         btn.textContent = "⚔️ УБИТ";
         setEnabled([btn, hoursInput, minutesInput, btnOk]);
       }, 3000);
+    }
+  }
+}
+
+async function resetBoss(bossId) {
+  if (!confirm("Точно сбросить таймер для " + document.getElementById("btnReset-" + bossId).closest("tr").querySelector(".name").textContent + "?")) return;
+  try {
+    const res = await apiFetch("/api/bosses/" + bossId + "/reset", { method: "POST" });
+    bosses = await res.json();
+    render();
+  } catch (e) {
+    if (e.message !== "Unauthorized") {
+      alert("Ошибка сброса: " + e);
     }
   }
 }
@@ -134,9 +283,9 @@ function getTimer(boss) {
   if (now < windowStart) {
     return { text: "До респа: " + formatRemaining(windowStart - now), cls: "waiting" };
   } else if (now < windowEnd) {
-    return { text: "🟡 РЕСП ПОШЕЛ! До 100%: " + formatRemaining(windowEnd - now), cls: "window" };
+    return { text: "🟡 РЕСП ПОШЕЛ! Осталось: " + formatRemaining(windowEnd - now), cls: "window" };
   } else {
-    return { text: "🔴 СТОИТ!", cls: "spawned" };
+    return { text: "🔴 Максимальное время респа прошло", cls: "spawned" };
   }
 }
 
@@ -152,19 +301,51 @@ function getTimerInfo(boss, now) {
   return { priority: 2, remaining: windowStart - now, sinceSpawned: 0 };
 }
 
+function getBossLevel(name) {
+  const m = name.match(/\[(\d+)\s*лвл\]/);
+  return m ? parseInt(m[1], 10) : 0;
+}
+
+function getGradeGroup(boss) {
+  if (boss.name === "TESTER_RB") return 3;
+  const level = getBossLevel(boss.name);
+  if (level >= 70) return 0;
+  if (level >= 64) return 1;
+  return 2;
+}
+
 function sortBosses(list) {
   const now = Date.now() / 1000;
   return list.slice().sort((a, b) => {
-    if (a.name === "TESTER_RB") return 1;
-    if (b.name === "TESTER_RB") return -1;
+    const ga = getGradeGroup(a);
+    const gb = getGradeGroup(b);
+    if (ga === 3 && gb !== 3) return 1;
+    if (gb === 3 && ga !== 3) return -1;
+    if (ga === 3 && gb === 3) return 0;
+    const groupDiff = sortAsc ? gb - ga : ga - gb;
+    if (groupDiff !== 0) return groupDiff;
     const ta = getTimerInfo(a, now);
     const tb = getTimerInfo(b, now);
     if (ta.priority !== tb.priority) return ta.priority - tb.priority;
     if (ta.priority === 0) return ta.remaining - tb.remaining;
     if (ta.priority === 1) return ta.sinceSpawned - tb.sinceSpawned;
     if (ta.priority === 2) return ta.remaining - tb.remaining;
+    const la = getBossLevel(a.name);
+    const lb = getBossLevel(b.name);
+    if (la !== lb) return sortAsc ? la - lb : lb - la;
     return a.name.localeCompare(b.name);
   });
+}
+
+function updateSortButton() {
+  const btn = document.getElementById("sortOrderBtn");
+  if (sortAsc) {
+    btn.title = "Сортировка уровней: по возрастанию";
+    btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="3" y1="13" x2="5" y2="13" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="3" y1="10" x2="7" y2="10" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="3" y1="7" x2="9" y2="7" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="3" y1="4" x2="11" y2="4" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="14" y1="11" x2="14" y2="4" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="12.5" y1="5.5" x2="14" y2="4" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="15.5" y1="5.5" x2="14" y2="4" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>';
+  } else {
+    btn.title = "Сортировка уровней: по убыванию";
+    btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="3" y1="4" x2="11" y2="4" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="3" y1="7" x2="9" y2="7" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="3" y1="10" x2="7" y2="10" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="3" y1="13" x2="5" y2="13" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="14" y1="4" x2="14" y2="11" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="12.5" y1="12.5" x2="14" y2="14" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="15.5" y1="12.5" x2="14" y2="14" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>';
+  }
 }
 
 function parseBossTime(value) {
@@ -212,10 +393,43 @@ function render() {
   var active = document.activeElement;
   if (active && active.tagName === "INPUT" && tableBody.contains(active)) return;
   const q = searchInput.value.toLowerCase();
-  const filtered = bosses.filter(b => b.name.toLowerCase().includes(q));
+  const hasLevelFilter = lvlMinInput.value.trim() !== "" || lvlMaxInput.value.trim() !== "";
+  const levelMin = hasLevelFilter ? (parseInt(lvlMinInput.value, 10) || 0) : 0;
+  const levelMax = hasLevelFilter ? (parseInt(lvlMaxInput.value, 10) || 999) : 999;
+  const filtered = bosses.filter(b => {
+    if (q && !b.name.toLowerCase().includes(q)) return false;
+    if (hasLevelFilter) {
+      if (b.name === "TESTER_RB") return false;
+      const lvl = getBossLevel(b.name);
+      if (lvl < levelMin || lvl > levelMax) return false;
+    }
+    return true;
+  });
   const sorted = sortBosses(filtered);
   tableBody.innerHTML = "";
-  sorted.forEach(b => {
+
+  let currentGroup = -1;
+
+  sorted.forEach(function (b) {
+    const group = getGradeGroup(b);
+    if (group !== currentGroup && group <= 2) {
+      const sep = document.createElement("tr");
+      let headerText = "";
+      let headerBg = "";
+      if (group === 0) {
+        headerText = "🔥 ТОП А ГРЕЙД (70+ лвл)";
+        headerBg = "#1f3a33";
+      } else if (group === 1) {
+        headerText = "⚔️ ЛОУ А ГРЕЙД (64–68 лвл)";
+        headerBg = "#3a3a1f";
+      } else if (group === 2) {
+        headerText = "🛡️ ОСТАЛЬНЫЕ РБ";
+        headerBg = "#3a2a1f";
+      }
+      sep.innerHTML = '<td colspan="5" class="sep-header" style="background:' + headerBg + '; color:#ffd166; font-weight:700; text-align:center; padding:7px 0; font-size:13px; letter-spacing:0.4px;">' + headerText + '</td>';
+      tableBody.appendChild(sep);
+      currentGroup = group;
+    }
     const timer = getTimer(b);
     const row = document.createElement("tr");
     row.innerHTML = '<td><span class="name">' + b.name + '</span></td>' +
@@ -228,14 +442,23 @@ function render() {
       '<span class="time-sep">:</span>' +
       '<input type="text" id="minutes-' + b.id + '" class="time-input" placeholder="ММ" maxlength="2">' +
       '<button class="btn-ok" id="btnOk-' + b.id + '" onclick="setBossKillTime(' + b.id + ')">ОК</button>' +
+      '<button class="btn-reset" id="btnReset-' + b.id + '" onclick="resetBoss(' + b.id + ')">✖ Обнулить значение</button>' +
       '</div></td>';
     tableBody.appendChild(row);
   });
 }
 
 searchInput.addEventListener("input", render);
-document.getElementById("btnSync").addEventListener("click", syncBosses);
-fetchBosses();
+lvlMinInput.addEventListener("input", render);
+lvlMaxInput.addEventListener("input", render);
+sortOrderBtn.addEventListener("click", () => {
+  sortAsc = !sortAsc;
+  updateSortButton();
+  render();
+});
+updateSortButton();
+document.getElementById("syncBtn").addEventListener("click", syncBosses);
+checkAuth();
 setInterval(fetchBosses, 10000);
 setInterval(updateTimers, 1000);
 </script>
