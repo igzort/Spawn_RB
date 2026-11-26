@@ -6,3 +6,5 @@ build/
 dist/
 *.spec
 .venv/
+config_my_backup.py
+dist_sale/
